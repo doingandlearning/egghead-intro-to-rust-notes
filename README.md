@@ -10,5 +10,5 @@ A gentle introduction to the basics of Rust.
 
 ## Resources
 
-[Rust book](https://doc.rust-lang.org/stable/book/)
-[Rust: A language for the Next 40 Years](https://www.youtube.com/watch?v=A3AdN7U24iU&t=1917s)
+- [Rust book](https://doc.rust-lang.org/stable/book/)
+- [Rust: A language for the Next 40 Years](https://www.youtube.com/watch?v=A3AdN7U24iU&t=1917s)
