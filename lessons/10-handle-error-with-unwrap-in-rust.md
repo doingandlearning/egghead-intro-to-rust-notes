@@ -2,18 +2,125 @@
 
 [Video link](https://egghead.io/lessons/rust-handle-errors-with-unwrap-in-rust)
 
-Instructor: 00:00 Let's say we have a function sum that takes two parameters, a and b, which are both of type number, and it simply adds those two numbers and returns them. We then want to ask the user to enter a first number and a second number. Eventually, we want to call sum with these two numbers and output the result.
+Let's say we have a simple function that will sum two numbers. In our function signature, we will specify the type of each of the incoming variables, as well as the return type.
 
-00:22 We read the first and the second number using stdin().read_line, but since first and second are both of type string, we can't pass them to sum because sum expects numbers. Let's say we would call sum with first and second. Save the file and run the program. We'll see that Rust won't be able to compile the program because the expected type is of u32, but what we've passed down was a string.
+```rs
+fn sum(a: u32, b: u32) -> u32 {
+    a + b
+}
+```
 
-00:56 To fix that, we create a new variable a of type u32. We first trim the input to make sure that there's no carriage returns and new lines. Then, we call a method parse() which tries to parse the string into a number, then we do the same thing for the second value.
+We can then prompt our user to give us the two numbers.
 
-01:21 After that, we update the sum function to take a and b. When we run this, the compiler will still complain because we defined a and b to be type u32, however, parse returns something of type result. The result type is like a wrapper that either resolves with an error or a value.
+```rs
+use std::io;
 
-01:47 There's different ways to go about this. The easiest is to call a result::unwrap() method, which will simply say, "If this result does not emit an error, it will resolve with the value." However, otherwise, the program will panic. Let's call unwrap on both results and run the program again.
+fn main() {
+    println!("Please enter a first number: ");
 
-02:09 The compiler still warns about the fact that the result of read_line is not handled, but we can ignore that for now. Now our program asks us to enter a first number and a second number. We'll see that it properly adds the numbers and tells us the result. If the parse function fails, unwrap will cause our program to panic.
+    let mut first = String::new();
+    io::stdin().read_line(&mut first);
 
-02:31 Let's run the program again and enter something that is not a number. Rust tells us that our program has panicked when we tried to unwrap a result. The cause of that was a parse_int error, which is the underline error which has been emitted from the parse function.
+    println!("Please enter a second number: ");
 
-02:48 It's very important to note that unwrap should only be used for quick developments. For production-ready code, errors should be handled differently.
+    let mut second = String::new();
+    io::stdin().read_line(&mut second);
+
+}
+
+fn sum(a: u32, b: u32) -> u32 {
+    a + b;
+}
+```
+
+Each of these variables are of type string which we can't pass to the sum function as it expects numbers. If we try to run this program we will get an error explaining this.
+
+```shell
+14 | let result = sum(first, second);
+   |    ---                  ^^^^^^ expected u32, found struct `std::string::String`
+```
+
+To fix this we'll need a new variable, `a`, of type `u32`. We will first trim the input to make sure that there are no carriage returns or new lines. Then, we will call a method `parse()` which tries to parse the string into a number. We will do this for both value.
+
+```rs
+...
+
+  let a:u32 = first.trim().parse();
+...
+  let b:u32 = second.trim().parse();
+...
+```
+
+When we run this, we get a new error (sometimes developing can be seen as successful if we get a new error :)).
+
+```shell
+ --> src/main.rs:8:17
+  |
+8 |     let a:u32 = first.trim().parse();
+  |                 ^^^^^^^^^^^^^^^^^^^^ expected u32, found enum `std::result::Result`
+  |
+  = note: expected type `u32`
+             found type `std::result::Result<_, _>`
+```
+
+Our compiler was expecting `a` to be `u32` but it is actually a `Result` type. This is a wrapper that either resolves as a value or an error.
+
+The easiest way to get at that value is to call the `::unwrap()` method. Let's see what happens when we do that.
+
+```rs
+fn main() {
+    println!("Please enter a first number: ");
+
+    let mut first = String::new();
+    io::stdin().read_line(&mut first);
+    let a:u32 = first.trim().parse().unwrap();
+
+    println!("Please enter a second number: ");
+
+    let mut second = String::new();
+    io::stdin().read_line(&mut second);
+    let b:u32 = second.trim().parse().unwrap();
+
+    let result = sum(a,b);
+    println!("{} + {} = {}", a,b, result);
+}
+
+fn sum(a: u32, b: u32) -> u32 {
+  a + b
+}
+```
+
+This time our program works - it will let us enter in numbers and calculate their sum:
+
+```shell
+Please enter a first number:
+5
+Please enter a second number:
+3
+5 + 3 = 8
+```
+
+However, before that happens it gives us a warning:
+
+```shell
+   |
+13 |     io::stdin().read_line(&mut second);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: this `Result` may be an `Err` variant, which should be handled
+```
+
+If we enter something that is not a number, we will make our program panic (poor program).
+
+```shell
+Please enter a first number:
+hello
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: ParseIntError { kind: InvalidDigit }', src/libcore/result.rs:1165:5
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace.
+```
+
+We can see the error is of type `ParseIntError`. Note, the `unwrap()` method should only be used for quick development and not for production code.
+
+## Personal take
+
+Moving to compiler code is a really interesting transition. Working through each of the issues at compile time can allow more confidence that at run time our code is more resilient and secure. I wonder where testing fits in?
