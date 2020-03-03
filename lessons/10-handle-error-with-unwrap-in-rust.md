@@ -124,3 +124,5 @@ We can see the error is of type `ParseIntError`. Note, the `unwrap()` method sho
 ## Personal take
 
 Moving to compiler code is a really interesting transition. Working through each of the issues at compile time can allow more confidence that at run time our code is more resilient and secure. I wonder where testing fits in?
+
+In this case, handling errors with unwrap() seems to mean panic if you get an error, otherwise keep going.
